@@ -51,7 +51,7 @@ public:
         }
         return ros::Time(std::stoi(sec_string),std::stoi(nsec_string));
     }
-    bool readData(bool use_imu=true) {
+    bool readData() {
 
         data_bag_file_name_ = datasetPath_ + "/imu_Rpose.bag";
 
@@ -68,12 +68,10 @@ public:
 
         /// load imu
         std::string imuListPath = datasetPath_ + "/imu.txt";
-        if (use_imu) {
-            if (!loadIMUReadings(imuListPath, IMU_TOPIC)) {
-                std::cout << "Can Not load imu data!" << std::endl;
-                return false;
+        if (!loadIMUReadings(imuListPath, IMU_TOPIC)) {
+            std::cout << "Can Not load imu data!" << std::endl;
+            return false;
 
-            }
         }
 
 
@@ -103,6 +101,7 @@ public:
         std::string s;
         while(getline(infile, s)){
             if(s[0] == '#')continue;
+
             s = replace(s, ',', ' ');
             istringstream is(s);
             int64_t time_pose;
@@ -122,7 +121,17 @@ public:
                 //dosomething
             }
             pose_c.header.seq = pose_c_seq;
-            pose_c.header.stamp = timesamp2rostime(time_pose);
+            cur_ts = timesamp2rostime(time_pose);
+            pose_c.header.stamp = cur_ts;
+            if(first_msg) {
+                start_times_.push_back(cur_ts);
+                first_msg = false;
+            }
+            if(cur_ts <= last_timestamp){
+                std::cout << "BAD Pose_C ts: " << cur_ts << " while the last is: "
+                          << last_timestamp << std::endl;
+                continue;
+            }
             data_bag_ptr_->write(topic, pose_c.header.stamp, pose_c);
             pose_c_seq ++;
         }
@@ -164,7 +173,17 @@ public:
             is >> imu.linear_acceleration.y;
             is >> imu.linear_acceleration.z; 
             imu.header.seq = imu_seq;
-            imu.header.stamp = timesamp2rostime(time_imu);
+            cur_ts = timesamp2rostime(time_imu);
+            imu.header.stamp = cur_ts; 
+            if(first_msg) {
+                start_times_.push_back(cur_ts);
+                first_msg = false;
+            }
+            if(cur_ts <= last_timestamp){
+                std::cout << "BAD imu ts: " << cur_ts << " while the last is: "
+                          << last_timestamp << std::endl;
+                continue;
+            }
             data_bag_ptr_->write(topic, imu.header.stamp, imu);
             imu_seq ++;
         }
@@ -223,7 +242,7 @@ int main (int argc, char ** argv) {
     }
 
     SegwayRobotDatasetReader datasetReader(dataset_folder_path);
-    datasetReader.readData(true);
+    datasetReader.readData();
 
     return 0;
 
