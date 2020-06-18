@@ -9,11 +9,12 @@ find_package(catkin REQUIRED COMPONENTS
   rosbag
 )
 # find_package( REQUIRED)
-catkin_package()
-add_executable(data2bag_pkg src/data2bag_1.cpp)
-target_link_libraries(data2bag_pkg ${catkin_LIBRARIES})
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
+catkin_package()
+add_executable(data2bag_pkg src/data2bag_1.cpp)
+target_link_libraries(data2bag_pkg ${catkin_LIBRARIES})
+
 
 
