@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(data2bag_pkg)
+project(data2rosbag)
 
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
@@ -10,11 +10,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 # find_package( REQUIRED)
 include_directories(
-  ${catkin_INCLUDE_DIRS}
+  include ${catkin_INCLUDE_DIRS}
 )
 catkin_package()
-add_executable(data2bag_pkg src/data2bag_1.cpp)
-target_link_libraries(data2bag_pkg ${catkin_LIBRARIES})
 
-
-
+add_executable(data2rosbag src/main.cc)
+target_link_libraries(data2rosbag ${catkin_LIBRARIES})

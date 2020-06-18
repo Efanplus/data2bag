@@ -6,21 +6,16 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
-                "/home/efan/MyCode/msf/catkin_ws/devel/include/**",
+                "/home/efan/MyCode/learn/catkin_ws/devel/include/**",
                 "/opt/ros/melodic/include/**",
-                "/home/efan/MyCode/msf/catkin_ws/src/data2bag_pkg/include/**",
-                "/home/efan/MyCode/msf/catkin_ws/src/ethzasl_msf/get_out/include/**",
-                "/home/efan/MyCode/msf/catkin_ws/src/ethzasl_msf/msf_core/include/**",
-                "/home/efan/MyCode/msf/catkin_ws/src/ethzasl_msf/msf_timing/include/**",
-                "/home/efan/MyCode/msf/catkin_ws/src/ethzasl_msf/msf_updates/include/**",
-                "/home/efan/MyCode/msf/catkin_ws/src/test_msf_imu_vio_pkg/include/**",
+                "/home/efan/MyCode/learn/catkin_ws/src/data2Rosbag/include/**",
                 "/usr/include/**"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",
             "compilerPath": "/usr/bin/gcc",
-            "cStandard": "c11",
-            "cppStandard": "c++17"
+            "cStandard": "gnu11",
+            "cppStandard": "c++11"
         }
     ],
     "version": 4
