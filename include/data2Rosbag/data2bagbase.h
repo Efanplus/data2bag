@@ -27,6 +27,7 @@
 
 class Data2bagBase {
  public:
+  enum { JPL, Hamilton };
   Data2bagBase(const std::string& data_bag_file_name)
       : data_bag_file_name_(data_bag_file_name) {
     data_bag_ptr_ = std::make_shared<rosbag::Bag>(
@@ -49,14 +50,23 @@ class Data2bagBase {
     }
     return ros::Time(std::stoi(sec_string), std::stoi(nsec_string));
   }
-  void GetIfstreamfromFile(std::istringstream& is, nav_msgs::Odometry& msg) {
+  void GetIfstreamfromFile(std::istringstream& is, nav_msgs::Odometry& msg,
+                           const int& quaternion_type = Hamilton) {
     is >> msg.pose.pose.position.x;
     is >> msg.pose.pose.position.y;
     is >> msg.pose.pose.position.z;
-    is >> msg.pose.pose.orientation.w;
-    is >> msg.pose.pose.orientation.x;
-    is >> msg.pose.pose.orientation.y;
-    is >> msg.pose.pose.orientation.z;
+    if (quaternion_type == JPL) {
+      is >> msg.pose.pose.orientation.x;
+      is >> msg.pose.pose.orientation.y;
+      is >> msg.pose.pose.orientation.z;
+      is >> msg.pose.pose.orientation.w;
+    } else if (quaternion_type == Hamilton) {
+      is >> msg.pose.pose.orientation.w;
+      is >> msg.pose.pose.orientation.x;
+      is >> msg.pose.pose.orientation.y;
+      is >> msg.pose.pose.orientation.z;
+    }
+
     // is >> msg.twist.twist.linear.x;
     // is >> msg.twist.twist.linear.y;
     // is >> msg.twist.twist.linear.z;
@@ -65,32 +75,50 @@ class Data2bagBase {
     // is >> msg.twist.twist.angular.z;
   }
   void GetIfstreamfromFile(std::istringstream& is,
-                           geometry_msgs::PoseStamped& msg) {
+                           geometry_msgs::PoseStamped& msg,
+                           const int& quaternion_type = Hamilton) {
     is >> msg.pose.position.x;
     is >> msg.pose.position.y;
     is >> msg.pose.position.z;
-    is >> msg.pose.orientation.w;
-    is >> msg.pose.orientation.x;
-    is >> msg.pose.orientation.y;
-    is >> msg.pose.orientation.z;
+    if (quaternion_type == JPL) {
+      is >> msg.pose.orientation.x;
+      is >> msg.pose.orientation.y;
+      is >> msg.pose.orientation.z;
+      is >> msg.pose.orientation.w;
+    } else if (quaternion_type == Hamilton) {
+      is >> msg.pose.orientation.w;
+      is >> msg.pose.orientation.x;
+      is >> msg.pose.orientation.y;
+      is >> msg.pose.orientation.z;
+    }
   }
   void GetIfstreamfromFile(std::istringstream& is,
-                           geometry_msgs::PointStamped& msg) {
+                           geometry_msgs::PointStamped& msg,
+                           const int& quaternion_type = Hamilton) {
     is >> msg.point.x;
     is >> msg.point.y;
     is >> msg.point.z;
   }
   void GetIfstreamfromFile(std::istringstream& is,
-                           geometry_msgs::PoseWithCovarianceStamped& msg) {
+                           geometry_msgs::PoseWithCovarianceStamped& msg,
+                           const int& quaternion_type = Hamilton) {
     is >> msg.pose.pose.position.x;
     is >> msg.pose.pose.position.y;
     is >> msg.pose.pose.position.z;
-    is >> msg.pose.pose.orientation.w;
-    is >> msg.pose.pose.orientation.x;
-    is >> msg.pose.pose.orientation.y;
-    is >> msg.pose.pose.orientation.z;
+    if (quaternion_type == JPL) {
+      is >> msg.pose.pose.orientation.x;
+      is >> msg.pose.pose.orientation.y;
+      is >> msg.pose.pose.orientation.z;
+      is >> msg.pose.pose.orientation.w;
+    } else if (quaternion_type == Hamilton) {
+      is >> msg.pose.pose.orientation.w;
+      is >> msg.pose.pose.orientation.x;
+      is >> msg.pose.pose.orientation.y;
+      is >> msg.pose.pose.orientation.z;
+    }
   }
-  void GetIfstreamfromFile(std::istringstream& is, sensor_msgs::Imu& msg) {
+  void GetIfstreamfromFile(std::istringstream& is, sensor_msgs::Imu& msg,
+                           const int& quaternion_type = Hamilton) {
     is >> msg.angular_velocity.x;
     is >> msg.angular_velocity.y;
     is >> msg.angular_velocity.z;
@@ -101,7 +129,8 @@ class Data2bagBase {
   template <typename MSG_TYPE>
   bool loadData(const std::string& list_file, const std::string& topic,
                 const std::string& frame_name = "",
-                const bool covariance_flag = false) {
+                const bool covariance_flag = false,
+                const int& quaternion_type = Hamilton) {
     std::ifstream ifs(list_file);
     if (!ifs.is_open()) {
       std::cerr << "Failed to open PosewithCovariance file: " << list_file
@@ -119,29 +148,29 @@ class Data2bagBase {
     while (getline(infile, s)) {
       if (s[0] == '#') continue;
       s = replace(s, ',', ' ');
+      std::size_t index_time = s.find_first_of(" ");
+      std::string str_time = s.substr(0, index_time);
+      if(str_time.size() > 10 &&  str_time[10] != '.'){
+        str_time = str_time.substr(0,10) + "." + str_time.substr(11);
+      }
+      s = s.substr(index_time + 1);
       std::istringstream is(s);
       int64_t msg_time;
       MSG_TYPE msg;
 
       s.clear();
-      is >> msg_time;
-      GetIfstreamfromFile(is, msg);
+      GetIfstreamfromFile(is, msg, quaternion_type);
 
       if (covariance_flag) {
         // dosomething
       }
       msg.header.seq = c_seq;
       msg.header.frame_id = frame_name;
-      cur_ts = timesamp2rostime(msg_time);
-      msg.header.stamp = cur_ts;
+      // std::cout << str_time << std::endl;
+      msg.header.stamp = ros::Time(std::stod(str_time));
       if (first_msg) {
         start_times_.push_back(cur_ts);
         first_msg = false;
-      }
-      if (cur_ts <= last_timestamp) {
-        std::cout << "BAD msg ts: " << cur_ts
-                  << " while the last is: " << last_timestamp << std::endl;
-        continue;
       }
       data_bag_ptr_->write(topic, msg.header.stamp, msg);
       c_seq++;
