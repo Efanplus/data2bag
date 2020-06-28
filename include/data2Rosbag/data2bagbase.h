@@ -151,7 +151,10 @@ class Data2bagBase {
       std::size_t index_time = s.find_first_of(" ");
       std::string str_time = s.substr(0, index_time);
       if(str_time.size() > 10 &&  str_time[10] != '.'){
-        str_time = str_time.substr(0,10) + "." + str_time.substr(11);
+        // std::cout << str_time << std::endl;
+        str_time = str_time.substr(0,10) + "." + str_time.substr(10);
+        // std::cout << str_time << std::endl;
+        // sleep(1);
       }
       s = s.substr(index_time + 1);
       std::istringstream is(s);
