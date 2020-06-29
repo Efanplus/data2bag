@@ -173,6 +173,7 @@ class Data2bagBase {
       msg.header.frame_id = frame_name;
       // std::cout << str_time << std::endl;
       msg.header.stamp = ros::Time(std::stod(str_time));
+      cur_ts = msg.header.stamp;
       if (first_msg) {
         start_times_.push_back(cur_ts);
         first_msg = false;
@@ -185,15 +186,19 @@ class Data2bagBase {
 
     // end_times_.push_back(cur_ts);
     ifs.close();
-    std::cout << "load " << topic << " data from: " << start_times_.back()
-              << " to " << end_times_.back() << " total " << c_seq
-              << " with duration: "
-              << end_times_.back().toSec() - start_times_.back().toSec()
-              << " s."
-              << " About: "
-              << c_seq /
-                     (end_times_.back().toSec() - start_times_.back().toSec())
-              << "Hz" << std::endl;
+    if (c_seq == 0) {
+      std::cout << "there is no data readed for this topic in this file\n";
+    } else {
+      std::cout << "load " << topic << " data from: " << start_times_.back()
+                << " to " << end_times_.back() << " total " << c_seq
+                << " with duration: "
+                << end_times_.back().toSec() - start_times_.back().toSec()
+                << " s."
+                << " About: "
+                << c_seq /
+                       (end_times_.back().toSec() - start_times_.back().toSec())
+                << "Hz" << std::endl;
+    }
     return true;
   }
 
