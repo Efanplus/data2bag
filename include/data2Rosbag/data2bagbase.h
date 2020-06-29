@@ -30,6 +30,8 @@ class Data2bagBase {
   enum { JPL, Hamilton };
   Data2bagBase(const std::string& data_bag_file_name)
       : data_bag_file_name_(data_bag_file_name) {
+    ROS_INFO_STREAM(__FUNCTION__ << " data_bag file name: "
+                                 << data_bag_file_name_);
     data_bag_ptr_ = std::make_shared<rosbag::Bag>(
         data_bag_file_name_, rosbag::bagmode::Read | rosbag::bagmode::Write);
   }
@@ -150,9 +152,9 @@ class Data2bagBase {
       s = replace(s, ',', ' ');
       std::size_t index_time = s.find_first_of(" ");
       std::string str_time = s.substr(0, index_time);
-      if(str_time.size() > 10 &&  str_time[10] != '.'){
+      if (str_time.size() > 10 && str_time[10] != '.') {
         // std::cout << str_time << std::endl;
-        str_time = str_time.substr(0,10) + "." + str_time.substr(10);
+        str_time = str_time.substr(0, 10) + "." + str_time.substr(10);
         // std::cout << str_time << std::endl;
         // sleep(1);
       }

@@ -4,7 +4,9 @@
 
 class Data2bag : public Data2bagBase {
  public:
-  Data2bag(const std::string& bag_name) : Data2bagBase(bag_name) {}
+  Data2bag(const std::string& bag_name) : Data2bagBase(bag_name) {
+    ROS_INFO_STREAM(__FUNCTION__);
+  }
   template <typename MSG_TYPE>
   bool AddFile(const std::string& file_path, const std::string& topic_name,
                const std::string& frame_id,
