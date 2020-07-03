@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+
 class Data2bagBase {
  public:
   enum { JPL, Hamilton };
@@ -53,6 +54,7 @@ class Data2bagBase {
     return ros::Time(std::stoi(sec_string), std::stoi(nsec_string));
   }
   void GetIfstreamfromFile(std::istringstream& is, nav_msgs::Odometry& msg,
+                           const bool covariance_flag = false,
                            const int& quaternion_type = Hamilton) {
     is >> msg.pose.pose.position.x;
     is >> msg.pose.pose.position.y;
@@ -78,6 +80,7 @@ class Data2bagBase {
   }
   void GetIfstreamfromFile(std::istringstream& is,
                            geometry_msgs::PoseStamped& msg,
+                           const bool covariance_flag = false,
                            const int& quaternion_type = Hamilton) {
     is >> msg.pose.position.x;
     is >> msg.pose.position.y;
@@ -96,6 +99,7 @@ class Data2bagBase {
   }
   void GetIfstreamfromFile(std::istringstream& is,
                            geometry_msgs::PointStamped& msg,
+                           const bool covariance_flag = false,
                            const int& quaternion_type = Hamilton) {
     is >> msg.point.x;
     is >> msg.point.y;
@@ -103,6 +107,7 @@ class Data2bagBase {
   }
   void GetIfstreamfromFile(std::istringstream& is,
                            geometry_msgs::PoseWithCovarianceStamped& msg,
+                           const bool covariance_flag = false,
                            const int& quaternion_type = Hamilton) {
     is >> msg.pose.pose.position.x;
     is >> msg.pose.pose.position.y;
@@ -118,8 +123,14 @@ class Data2bagBase {
       is >> msg.pose.pose.orientation.y;
       is >> msg.pose.pose.orientation.z;
     }
+    if (covariance_flag) {
+      for (int i = 0; i < 36; i++) {
+        is >> msg.pose.covariance[i];
+      }
+    }
   }
   void GetIfstreamfromFile(std::istringstream& is, sensor_msgs::Imu& msg,
+                           const bool covariance_flag = false,
                            const int& quaternion_type = Hamilton) {
     is >> msg.angular_velocity.x;
     is >> msg.angular_velocity.y;
