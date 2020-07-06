@@ -53,6 +53,7 @@ class Data2bagBase {
     return ros::Time(std::stoi(sec_string), std::stoi(nsec_string));
   }
   void GetIfstreamfromFile(std::istringstream& is, nav_msgs::Odometry& msg,
+                           const bool covariance_flag = false,
                            const int& quaternion_type = Hamilton) {
     is >> msg.pose.pose.position.x;
     is >> msg.pose.pose.position.y;
@@ -78,6 +79,7 @@ class Data2bagBase {
   }
   void GetIfstreamfromFile(std::istringstream& is,
                            geometry_msgs::PoseStamped& msg,
+                           const bool covariance_flag = false,
                            const int& quaternion_type = Hamilton) {
     is >> msg.pose.position.x;
     is >> msg.pose.position.y;
@@ -96,6 +98,7 @@ class Data2bagBase {
   }
   void GetIfstreamfromFile(std::istringstream& is,
                            geometry_msgs::PointStamped& msg,
+                           const bool covariance_flag = false,
                            const int& quaternion_type = Hamilton) {
     is >> msg.point.x;
     is >> msg.point.y;
@@ -103,6 +106,7 @@ class Data2bagBase {
   }
   void GetIfstreamfromFile(std::istringstream& is,
                            geometry_msgs::PoseWithCovarianceStamped& msg,
+                           const bool covariance_flag = false,
                            const int& quaternion_type = Hamilton) {
     is >> msg.pose.pose.position.x;
     is >> msg.pose.pose.position.y;
@@ -117,9 +121,30 @@ class Data2bagBase {
       is >> msg.pose.pose.orientation.x;
       is >> msg.pose.pose.orientation.y;
       is >> msg.pose.pose.orientation.z;
+      // std::cout << msg.pose.pose.orientation.w << ",";
+      // std::cout << msg.pose.pose.orientation.x << ",";
+      // std::cout << msg.pose.pose.orientation.y << ",";
+      // std::cout << msg.pose.pose.orientation.z << std::endl;
+    }
+    if (true) {
+      double scale = 10;
+      std::vector<double> covariance_2d_(9);
+      for (int i = 0; i < 9; i++) {
+        is >> covariance_2d_[i];
+      }
+      msg.pose.covariance[0] =  std::pow(covariance_2d_[0], 1) * 100;
+      msg.pose.covariance[1] =  std::pow(covariance_2d_[1], 1) * 100;
+      msg.pose.covariance[6] =  std::pow(covariance_2d_[3], 1) * 100;
+      msg.pose.covariance[7] =  std::pow(covariance_2d_[4], 1) * 100;
+      msg.pose.covariance[35] = std::pow(covariance_2d_[8], 1) * 100;
+
+      msg.pose.covariance[14] = 0.1;
+      msg.pose.covariance[21] = 0.01;
+      msg.pose.covariance[28] = 0.01;
     }
   }
   void GetIfstreamfromFile(std::istringstream& is, sensor_msgs::Imu& msg,
+                           const bool covariance_flag = false,
                            const int& quaternion_type = Hamilton) {
     is >> msg.angular_velocity.x;
     is >> msg.angular_velocity.y;
@@ -139,6 +164,9 @@ class Data2bagBase {
                 << std::endl;
       return false;
     }
+    std::cout << "loaddata from file: " << list_file << ", topic: " << topic
+              << ", frame_name:" << frame_name
+              << ", quaternion_type:" << quaternion_type << std::endl;
     bool first_msg = true;
     ros::Time last_timestamp = ros::Time(0);
     ros::Time cur_ts = ros::Time(0);
@@ -164,7 +192,7 @@ class Data2bagBase {
       MSG_TYPE msg;
 
       s.clear();
-      GetIfstreamfromFile(is, msg, quaternion_type);
+      GetIfstreamfromFile(is, msg, covariance_flag, quaternion_type);
 
       if (covariance_flag) {
         // dosomething
