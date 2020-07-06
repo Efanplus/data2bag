@@ -57,18 +57,13 @@ class Data2bagBase {
                            const int& quaternion_type = Hamilton) {
     is >> msg.pose.pose.position.x;
     is >> msg.pose.pose.position.y;
-    is >> msg.pose.pose.position.z;
-    if (quaternion_type == JPL) {
-      is >> msg.pose.pose.orientation.x;
-      is >> msg.pose.pose.orientation.y;
-      is >> msg.pose.pose.orientation.z;
-      is >> msg.pose.pose.orientation.w;
-    } else if (quaternion_type == Hamilton) {
-      is >> msg.pose.pose.orientation.w;
-      is >> msg.pose.pose.orientation.x;
-      is >> msg.pose.pose.orientation.y;
-      is >> msg.pose.pose.orientation.z;
-    }
+    msg.pose.pose.position.z = 0;
+    double theta;
+    is >> theta;
+    msg.pose.pose.orientation.x = 0;
+    msg.pose.pose.orientation.y = 0;
+    msg.pose.pose.orientation.z = std::sin(theta/2);
+    msg.pose.pose.orientation.w = std::cos(theta/2);
 
     // is >> msg.twist.twist.linear.x;
     // is >> msg.twist.twist.linear.y;
@@ -132,13 +127,13 @@ class Data2bagBase {
       for (int i = 0; i < 9; i++) {
         is >> covariance_2d_[i];
       }
-      msg.pose.covariance[0] =  std::pow(covariance_2d_[0], 1) * 100;
-      msg.pose.covariance[1] =  std::pow(covariance_2d_[1], 1) * 100;
-      msg.pose.covariance[6] =  std::pow(covariance_2d_[3], 1) * 100;
-      msg.pose.covariance[7] =  std::pow(covariance_2d_[4], 1) * 100;
-      msg.pose.covariance[35] = std::pow(covariance_2d_[8], 1) * 100;
+      msg.pose.covariance[0] = std::pow(covariance_2d_[0], 1);
+      msg.pose.covariance[1] = std::pow(covariance_2d_[1], 1);
+      msg.pose.covariance[6] = std::pow(covariance_2d_[3], 1);
+      msg.pose.covariance[7] = std::pow(covariance_2d_[4], 1);
+      msg.pose.covariance[35] = std::pow(covariance_2d_[8], 1);
 
-      msg.pose.covariance[14] = 0.1;
+      msg.pose.covariance[14] = 0.01;
       msg.pose.covariance[21] = 0.01;
       msg.pose.covariance[28] = 0.01;
     }

@@ -10,26 +10,18 @@ class Data2bag : public Data2bagBase {
     if (directory_.back() != '/') directory_ += "/";
   }
   bool AddFile() {
-    if (!this->loadData<geometry_msgs::PoseStamped>(
-            directory_ + "relocal_filter.txt", "relocal_info", "relocalframe",
-            false, JPL)) {
-      ROS_INFO_STREAM("load data failure, file path:"
-                      << directory_ + "relocal_filter.txt"
-                      << " topic name: "
-                      << "relocal_info");
-    }
     if (!this->loadData<geometry_msgs::PoseWithCovarianceStamped>(
-            directory_ + "amcl_pose_result.txt", "amcl_info", "amclframe",
+            directory_ + "tag.txt", "tag_info", "tagframe",
             true, JPL)) {
       ROS_INFO_STREAM("load data failure, file path:"
-                      << directory_ + "amcl_pose_result.txt"
+                      << directory_ + "tag.txt"
                       << " topic name: "
-                      << "amcl_info");
+                      << "tag_info");
     }
-    if (!this->loadData<nav_msgs::Odometry>(directory_ + "odom_pose_result.txt",
+    if (!this->loadData<nav_msgs::Odometry>(directory_ + "odom_2dpose.txt",
                                             "odom_info", "world", false, JPL)) {
       ROS_INFO_STREAM("load data failure, file path:"
-                      << directory_ + "odom_pose_result.txt"
+                      << directory_ + "odom_2dpose.txt"
                       << " topic name: "
                       << "odom_info");
     }
