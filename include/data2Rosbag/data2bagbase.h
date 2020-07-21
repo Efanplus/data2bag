@@ -34,6 +34,7 @@ class Data2bagBase {
                                  << data_bag_file_name_);
     data_bag_ptr_ = std::make_shared<rosbag::Bag>(
         data_bag_file_name_, rosbag::bagmode::Read | rosbag::bagmode::Write);
+    cur_ts_ = ros::Time(0);
   }
   ~Data2bagBase() { data_bag_ptr_->close(); }
   std::string replace(std::string& original, char o, char n) {
@@ -62,8 +63,8 @@ class Data2bagBase {
     is >> theta;
     msg.pose.pose.orientation.x = 0;
     msg.pose.pose.orientation.y = 0;
-    msg.pose.pose.orientation.z = std::sin(theta/2);
-    msg.pose.pose.orientation.w = std::cos(theta/2);
+    msg.pose.pose.orientation.z = std::sin(theta / 2);
+    msg.pose.pose.orientation.w = std::cos(theta / 2);
 
     // is >> msg.twist.twist.linear.x;
     // is >> msg.twist.twist.linear.y;
@@ -105,33 +106,30 @@ class Data2bagBase {
                            const int& quaternion_type = Hamilton) {
     is >> msg.pose.pose.position.x;
     is >> msg.pose.pose.position.y;
-    is >> msg.pose.pose.position.z;
-    if (quaternion_type == JPL) {
-      is >> msg.pose.pose.orientation.x;
-      is >> msg.pose.pose.orientation.y;
-      is >> msg.pose.pose.orientation.z;
-      is >> msg.pose.pose.orientation.w;
-    } else if (quaternion_type == Hamilton) {
-      is >> msg.pose.pose.orientation.w;
-      is >> msg.pose.pose.orientation.x;
-      is >> msg.pose.pose.orientation.y;
-      is >> msg.pose.pose.orientation.z;
-      // std::cout << msg.pose.pose.orientation.w << ",";
-      // std::cout << msg.pose.pose.orientation.x << ",";
-      // std::cout << msg.pose.pose.orientation.y << ",";
-      // std::cout << msg.pose.pose.orientation.z << std::endl;
-    }
+    msg.pose.pose.position.z = 0;
+    double theta;
+    is >> theta;
+    msg.pose.pose.orientation.x = 0;
+    msg.pose.pose.orientation.y = 0;
+    msg.pose.pose.orientation.z = std::sin(theta / 2);
+    msg.pose.pose.orientation.w = std::cos(theta / 2);
     if (true) {
-      double scale = 10;
+      // double scale = 10;
       std::vector<double> covariance_2d_(9);
       for (int i = 0; i < 9; i++) {
         is >> covariance_2d_[i];
       }
-      msg.pose.covariance[0] = std::pow(covariance_2d_[0], 1);
-      msg.pose.covariance[1] = std::pow(covariance_2d_[1], 1);
-      msg.pose.covariance[6] = std::pow(covariance_2d_[3], 1);
-      msg.pose.covariance[7] = std::pow(covariance_2d_[4], 1);
-      msg.pose.covariance[35] = std::pow(covariance_2d_[8], 1);
+      const double scale = 5;
+      msg.pose.covariance[0] = std::pow(covariance_2d_[0], 1) * scale;
+      msg.pose.covariance[1] = std::pow(covariance_2d_[1], 1) * scale;
+      msg.pose.covariance[6] = std::pow(covariance_2d_[3], 1) * scale;
+      msg.pose.covariance[7] = std::pow(covariance_2d_[4], 1) * scale;
+      msg.pose.covariance[35] = std::pow(covariance_2d_[8], 1) * scale;
+
+      msg.pose.covariance[5] = std::pow(covariance_2d_[2], 1) * scale;
+      msg.pose.covariance[11] = std::pow(covariance_2d_[5], 1) * scale;
+      msg.pose.covariance[30] = std::pow(covariance_2d_[6], 1) * scale;
+      msg.pose.covariance[31] = std::pow(covariance_2d_[7], 1) * scale;
 
       msg.pose.covariance[14] = 0.01;
       msg.pose.covariance[21] = 0.01;
@@ -164,7 +162,6 @@ class Data2bagBase {
               << ", quaternion_type:" << quaternion_type << std::endl;
     bool first_msg = true;
     ros::Time last_timestamp = ros::Time(0);
-    ros::Time cur_ts = ros::Time(0);
     std::string one_line;
     int c_seq = 0;
     std::ifstream infile;
@@ -183,7 +180,6 @@ class Data2bagBase {
       }
       s = s.substr(index_time + 1);
       std::istringstream is(s);
-      int64_t msg_time;
       MSG_TYPE msg;
 
       s.clear();
@@ -196,16 +192,20 @@ class Data2bagBase {
       msg.header.frame_id = frame_name;
       // std::cout << str_time << std::endl;
       msg.header.stamp = ros::Time(std::stod(str_time));
-      cur_ts = msg.header.stamp;
+      if (msg.header.stamp == cur_ts_) {
+        ROS_WARN_STREAM("the time is same with last one, topic: " << topic);
+      } else {
+        data_bag_ptr_->write(topic, msg.header.stamp, msg);
+      }
+      cur_ts_ = msg.header.stamp;
       if (first_msg) {
-        start_times_.push_back(cur_ts);
+        start_times_.push_back(cur_ts_);
         first_msg = false;
       }
-      data_bag_ptr_->write(topic, msg.header.stamp, msg);
       c_seq++;
     }
 
-    end_times_.push_back(cur_ts);
+    end_times_.push_back(cur_ts_);
 
     // end_times_.push_back(cur_ts);
     ifs.close();
@@ -233,5 +233,6 @@ class Data2bagBase {
   std::shared_ptr<rosbag::Bag> data_bag_ptr_;
   std::vector<ros::Time> start_times_, end_times_;
   std::string data_bag_file_name_;
+  ros::Time cur_ts_;
 };
 #endif

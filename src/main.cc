@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   }
   
   std::size_t index = directory.find_last_of('/');
-  std::string bag_name = "odom_relocal_" + directory.substr(index + 1) + ".bag";
+  std::string bag_name = "odom_tag_" + directory.substr(index + 1) + ".bag";
   std::cout << directory << "," << bag_name << std::endl;
   Data2bag data2bag(bag_name, directory);
   data2bag.AddFile();
