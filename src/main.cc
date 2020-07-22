@@ -3,6 +3,9 @@
 
 #include "data2Rosbag/data2bag.h"
 int main(int argc, char** argv) {
+  google::SetVersionString("1.0.0");
+  google::SetUsageMessage("data2bag_odom_amcl_relocal");
+  google::ParseCommandLineFlags(&argc, &argv, true);
   ros::init(argc, argv, "data2Rosbag");
   std::string directory = argv[1];
   if (directory.empty() || directory == "/") {
@@ -11,9 +14,10 @@ int main(int argc, char** argv) {
   if (directory.back() == '/') {
     directory = directory.substr(0, directory.size() - 1);
   }
-  
+
   std::size_t index = directory.find_last_of('/');
-  std::string bag_name = "odom_relocal_" + directory.substr(index + 1) + ".bag";
+  std::string bag_name =
+      directory + "/odom_relocal_amcl_" + directory.substr(index + 1) + ".bag";
   std::cout << directory << "," << bag_name << std::endl;
   Data2bag data2bag(bag_name, directory);
   data2bag.AddFile();

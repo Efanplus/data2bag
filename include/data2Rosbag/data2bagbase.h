@@ -12,6 +12,7 @@
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <gflags/gflags.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 
@@ -25,6 +26,9 @@
 #include <string>
 #include <vector>
 
+DEFINE_int32(amcl_cov_scale, 60,
+             "the scale which will be multiplied by the amcl's covariance");
+
 class Data2bagBase {
  public:
   enum { JPL, Hamilton };
@@ -34,6 +38,15 @@ class Data2bagBase {
                                  << data_bag_file_name_);
     data_bag_ptr_ = std::make_shared<rosbag::Bag>(
         data_bag_file_name_, rosbag::bagmode::Read | rosbag::bagmode::Write);
+    amcl_cov_scale_ = 1;
+    ROS_INFO_STREAM("the FLAGS_amcl_cov_scale is:" << FLAGS_amcl_cov_scale);
+    if (FLAGS_amcl_cov_scale > 0) {
+      amcl_cov_scale_ = FLAGS_amcl_cov_scale;
+      ROS_INFO_STREAM(
+          "the scale which will be multiplied by the amcl's "
+          "covariance is "
+          << amcl_cov_scale_);
+    }
   }
   ~Data2bagBase() { data_bag_ptr_->close(); }
   std::string replace(std::string& original, char o, char n) {
@@ -132,11 +145,12 @@ class Data2bagBase {
       for (int i = 0; i < 9; i++) {
         is >> covariance_2d_[i];
       }
-      msg.pose.covariance[0] =  std::pow(covariance_2d_[0], 1) * 100;
-      msg.pose.covariance[1] =  std::pow(covariance_2d_[1], 1) * 100;
-      msg.pose.covariance[6] =  std::pow(covariance_2d_[3], 1) * 100;
-      msg.pose.covariance[7] =  std::pow(covariance_2d_[4], 1) * 100;
-      msg.pose.covariance[35] = std::pow(covariance_2d_[8], 1) * 100;
+      msg.pose.covariance[0] = std::pow(covariance_2d_[0], 1) * amcl_cov_scale_;
+      msg.pose.covariance[1] = std::pow(covariance_2d_[1], 1) * amcl_cov_scale_;
+      msg.pose.covariance[6] = std::pow(covariance_2d_[3], 1) * amcl_cov_scale_;
+      msg.pose.covariance[7] = std::pow(covariance_2d_[4], 1) * amcl_cov_scale_;
+      msg.pose.covariance[35] =
+          std::pow(covariance_2d_[8], 1) * amcl_cov_scale_;
 
       msg.pose.covariance[14] = 0.1;
       msg.pose.covariance[21] = 0.01;
@@ -238,5 +252,6 @@ class Data2bagBase {
   std::shared_ptr<rosbag::Bag> data_bag_ptr_;
   std::vector<ros::Time> start_times_, end_times_;
   std::string data_bag_file_name_;
+  double amcl_cov_scale_;
 };
 #endif
